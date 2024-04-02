@@ -18,6 +18,8 @@ import java.util.Random;
 
 public class App extends Application {
 
+    ArrayList<Ball> balls = new ArrayList<Ball>();
+
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -26,7 +28,6 @@ public class App extends Application {
         Group group = new Group();
         Scene scene = new Scene(group, 800, 600);
 
-        ArrayList<Ball> balls = new ArrayList<Ball>();
         CollisionHandler collider = new CollisionHandler();
 
         Rectangle background = new Rectangle(0,0,800,600);
@@ -34,12 +35,13 @@ public class App extends Application {
         group.getChildren().add(background);
 
         for(int i = 0; i < 50; i++){
-            balls.add(new Ball(10 + rnd.nextInt(780), 10 + rnd.nextInt(580), rnd.nextInt(20), rnd.nextInt(20), Ball.R, collider));
-            group.getChildren().add(balls.get(i));
+            Ball t = new Ball(10 + rnd.nextInt(780), 10 + rnd.nextInt(580), rnd.nextInt(50), rnd.nextInt(50), Ball.R, collider);
+            balls.add(t);
+            group.getChildren().add(t);
         }
 
         Timer tim = new Timer();
-        tim.scheduleAtFixedRate(collider, 0, 1);
+        tim.scheduleAtFixedRate(collider, 0, 5);
 
         background.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
@@ -58,8 +60,7 @@ public class App extends Application {
 
 class Ball extends Circle {
     Nvect pressedForce;
-    double x, y, r, er, k, m;
-    Nvect V;
+    double x, y, vx, vy, r, k, m;
     public static final double R = 10;
     CollisionHandler collider;
     EventHandler<MouseEvent> clickHandler, dragHandler, releaseHandler;
@@ -67,11 +68,12 @@ class Ball extends Circle {
     Ball(double x, double y, double vx, double vy, double r, CollisionHandler collider){
         super(r);
         this.r = r;
-        this.k = 25;
+        this.k = 40;
         this.x = x;
         this.y = y;
+        this.vx = vx;
+        this.vy = vy;
         this.m = this.r/10;
-        this.V = new Nvect(vx, vy);
         this.setLayoutX(x);
         this.setLayoutY(y);
         this.pressedForce = null;
@@ -144,17 +146,18 @@ class CollisionHandler extends TimerTask{
         //Check collisions with walls
         for(Ball b : balls){
             if(b.x < b.r || b.x > 800-b.r){
-                b.V = b.V.add(new Nvect((b.x < 400 ? b.r - b.x : (800 - b.r) - b.x) * (b.k * K) / (b.k + K) / b.m, 0));
+                b.vx += (b.x < 400 ? b.r - b.x : (800 - b.r) - b.x) * (b.k * K) / (b.k + K) / b.m;
             }
             if(b.y < b.r || b.y > 600-b.r){
-                b.V = b.V.add(new Nvect(0, (b.y < 300 ? b.r - b.y : (600 - b.r) - b.y) * (b.k * K) / (b.k + K) / b.m));
+                b.vy += (b.y < 300 ? b.r - b.y : (600 - b.r) - b.y) * (b.k * K) / (b.k + K) / b.m;
             }
 
-            //b.V = b.V.add(new Nvect(0, 5));  // g implementation
-            b.V = b.V.mul(0.99999); // special condition for stopping
+            //b.vy += 4;  // g implementation
+            b.vx -= 0.00001 * b.vx * b.vx * (b.vx > 0? 1: -1); // special condition for stopping
+            b.vy -= 0.00001 * b.vy * b.vy * (b.vy > 0? 1: -1);
 
             if(b.pressedForce != null){
-                b.V = b.V.add(b.pressedForce.mul(1/b.m)); //doesn't work =(
+                //action for pressed ball
             }
         }
 
@@ -162,24 +165,28 @@ class CollisionHandler extends TimerTask{
         if(balls.size() >= 2){
             for(int i = 0; i < balls.size() - 1; i++){
                 for(int j = i+1; j < balls.size(); j++){
+
                     Ball b1 = balls.get(i), b2 = balls.get(j);
-                    Nvect axe = new Nvect(b2.x-b1.x, b2.y-b1.y);
+                    
                     double
-                    shift = b1.r + b2.r - axe.len(),
-                    k = (b1.k * b2.k) / (b1.k + b2.k);
-                    if(b1.r + b2.r > axe.len()){
-                        double absF = k * shift;
-                        axe = axe.mul(absF/axe.len());
-                        b1.V = b1.V.sub(new Nvect(axe.mul(1/b1.m)));
-                        b2.V = b2.V.add(new Nvect(axe.mul(1/b2.m)));
-                        
+                    k = (b1.k * b2.k) / (b1.k + b2.k),
+                    dx = b2.x-b1.x, 
+                    dy = b2.y-b1.y,
+                    dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if(b1.r + b2.r > dist){
+                        double absF = (b1.r + b2.r - dist)  * k;
+                        b1.vx -= absF * dx / dist /b1.m;
+                        b1.vy -= absF * dy / dist /b1.m;
+                        b2.vx += absF * dx / dist /b2.m;
+                        b2.vy += absF * dy / dist /b2.m;
                     }
                 }
             }
         }
 
         for(Ball b: balls){
-            b.move(b.x + b.V.coords[0] * 0.01, b.y + b.V.coords[1] * 0.01);
+            b.move(b.x + b.vx * 0.001, b.y + b.vy * 0.001);
         }
     }
 }
