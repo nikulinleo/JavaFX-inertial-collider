@@ -59,14 +59,13 @@ public class App extends Application {
 }
 
 class Ball extends Circle {
-    Nvect pressedForce;
     double x, y, vx, vy, r, k, m;
     public static final double R = 10;
     CollisionHandler collider;
     EventHandler<MouseEvent> clickHandler, dragHandler, releaseHandler;
     
     Ball(double x, double y, double vx, double vy, double r, CollisionHandler collider){
-        super(r);
+        super(r, Color.BLUE);
         this.r = r;
         this.k = 40;
         this.x = x;
@@ -76,7 +75,6 @@ class Ball extends Circle {
         this.m = this.r/10;
         this.setLayoutX(x);
         this.setLayoutY(y);
-        this.pressedForce = null;
         this.clickHandler = new BallClickHandler(this);
         this.releaseHandler = new BallReleaseHandler(this);
         this.dragHandler = new BallDragHandler(this);
@@ -85,6 +83,10 @@ class Ball extends Circle {
         this.setOnMouseReleased(releaseHandler);
         collider.addBall(this);
         this.collider = collider;
+    }
+
+    protected void finalize(){
+        System.out.println(this.toString() + " ball destroyed");
     }
 
     void move(double x, double y){
@@ -102,7 +104,6 @@ class BallClickHandler implements EventHandler<MouseEvent>{
     
     @Override
     public void handle(MouseEvent arg0) { 
-        ball.pressedForce = null;
     }
 }
 
@@ -115,7 +116,6 @@ class BallDragHandler implements EventHandler<MouseEvent>{
 
     @Override
     public void handle(MouseEvent event) {
-        ball.pressedForce = null;
     }
 }
 
@@ -128,7 +128,6 @@ class BallReleaseHandler implements EventHandler<MouseEvent>{
     
     @Override
     public void handle(MouseEvent arg0) { 
-        ball.pressedForce = null;
     }
 }
 
@@ -156,9 +155,7 @@ class CollisionHandler extends TimerTask{
             b.vx -= 0.00001 * b.vx * b.vx * (b.vx > 0? 1: -1); // special condition for stopping
             b.vy -= 0.00001 * b.vy * b.vy * (b.vy > 0? 1: -1);
 
-            if(b.pressedForce != null){
-                //action for pressed ball
-            }
+            
         }
 
         //Check collisions with other balls
@@ -172,7 +169,7 @@ class CollisionHandler extends TimerTask{
                     k = (b1.k * b2.k) / (b1.k + b2.k),
                     dx = b2.x-b1.x, 
                     dy = b2.y-b1.y,
-                    dist = Math.sqrt(dx*dx + dy*dy);
+                    dist = Math.sqrt(dx*dx + dy*dy) + 0.001;
 
                     if(b1.r + b2.r > dist){
                         double absF = (b1.r + b2.r - dist)  * k;
@@ -186,7 +183,7 @@ class CollisionHandler extends TimerTask{
         }
 
         for(Ball b: balls){
-            b.move(b.x + b.vx * 0.001, b.y + b.vy * 0.001);
+            b.move(b.x + b.vx * 0.01, b.y + b.vy * 0.01);
         }
     }
 }
