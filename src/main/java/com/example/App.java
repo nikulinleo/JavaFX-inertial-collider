@@ -1,5 +1,6 @@
 package com.example;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -40,8 +41,6 @@ public class App extends Application {
             group.getChildren().add(t);
         }
 
-        Timer tim = new Timer();
-        tim.scheduleAtFixedRate(collider, 0, 5);
 
         background.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
@@ -51,6 +50,10 @@ public class App extends Application {
 
         stage.setScene(scene);
         stage.show();
+
+
+        collider.start();
+
     }
 
     public static void main(String[] args) {
@@ -131,7 +134,7 @@ class BallReleaseHandler implements EventHandler<MouseEvent>{
     }
 }
 
-class CollisionHandler extends TimerTask{
+class CollisionHandler extends AnimationTimer{
     ArrayList<Ball> balls = new ArrayList<Ball>();
     double K=50;
 
@@ -140,7 +143,7 @@ class CollisionHandler extends TimerTask{
     }
     
     @Override
-    public void run(){
+    public void handle(long now){
 
         //Check collisions with walls
         for(Ball b : balls){
@@ -152,10 +155,8 @@ class CollisionHandler extends TimerTask{
             }
 
             //b.vy += 4;  // g implementation
-            b.vx -= 0.00001 * b.vx * b.vx * (b.vx > 0? 1: -1); // special condition for stopping
-            b.vy -= 0.00001 * b.vy * b.vy * (b.vy > 0? 1: -1);
-
-            
+            b.vx -= 0.000001 * b.vx * b.vx * (b.vx > 0? 1: -1); // special condition for stopping
+            b.vy -= 0.000001 * b.vy * b.vy * (b.vy > 0? 1: -1);
         }
 
         //Check collisions with other balls
