@@ -13,8 +13,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.TimerTask;
-import java.util.Timer;
 import java.util.Random;
 
 public class App extends Application {
