@@ -33,7 +33,7 @@ public class App extends Application {
         background.setFill(Color.WHITE);
         group.getChildren().add(background);
 
-        for(int i = 0; i < 50; i++){
+        for(int i = 0; i < 10; i++){
             Ball t = new Ball(10 + rnd.nextInt(780), 10 + rnd.nextInt(580), rnd.nextInt(50), rnd.nextInt(50), Ball.R, collider);
             balls.add(t);
             group.getChildren().add(t);
